@@ -1,7 +1,5 @@
 import { useRef } from "react";
-import * as html2pdf from "html2pdf.js";
 import './App.css'
-
 
 type Product = {
   id: string;
@@ -22,31 +20,21 @@ const SAMPLE_PRODUCTS: Product[] = Array.from({ length: 22 }).map((_, i) => ({
 export default function App() {
   const catalogRef = useRef<HTMLDivElement | null>(null);
 
-  const exportToPdf = async () => {
-    const element = catalogRef.current;
-    if (!element) return;
-
-    // Importação dinâmica para funcionar no Vite + TS
-    const html2pdf = (await import("html2pdf.js")).default;
-
-    // 1️⃣ Extrair CSS de impressão (opcional)
-    const styleEl = document.createElement("style");
-    // ... seu CSS de @media print ...
-    element.appendChild(styleEl);
-
-    // 2️⃣ Gerar PDF
-    await (html2pdf as any)() // <== precisa do "as any" para TS
-      .set({
-        filename: "catalogo.pdf",
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      })
-      .from(element)
-      .save();
-
-    // 3️⃣ Remover style temporário
-    element.removeChild(styleEl);
+  const viewPdf = () => {
+    window.open("http://localhost:3001/pdf", "_blank");
   };
+
+  const exportToPdf = async () => {
+    const res = await fetch("http://localhost:3001/pdf");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "catalogo.pdf";
+    a.click();
+  };
+
   return (
     <div className="page">
       <div className="container">
@@ -54,6 +42,9 @@ export default function App() {
           <h1 className="title">Catálogo Rápido</h1>
 
           <div className="header-buttons">
+            <button onClick={() => viewPdf()} className="btn-primary">
+              Ver PDF
+            </button>
             <button onClick={() => exportToPdf()} className="btn-primary">
               Exportar para PDF
             </button>
